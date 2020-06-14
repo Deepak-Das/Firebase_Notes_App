@@ -66,10 +66,12 @@ public class MainActivity extends AppCompatActivity {
 
         Toast.makeText(this, "clicked", Toast.LENGTH_SHORT).show();
 
-        Map<String,Object> note= new HashMap<>();
-        note.put("brand","Apple");
-        note.put("name","Iphone 11");
-        note.put("price","$299");
+//        Map<String,Object> note= new HashMap<>();
+//        note.put("brand","Apple");
+//        note.put("name","Iphone 11");
+//        note.put("price","$299");
+
+        Note note=new Note("Firebase","learn","123",false);
         
         firebaseFirestore.collection("Notes").add(note)
                 .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
@@ -89,7 +91,7 @@ public class MainActivity extends AppCompatActivity {
     private void delete_note(View v) {
 
         firebaseFirestore.collection("Notes")
-                .whereEqualTo("brand","Apple")
+                .whereEqualTo("user_id","123")
                 .get()
                 .addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
                     @Override
