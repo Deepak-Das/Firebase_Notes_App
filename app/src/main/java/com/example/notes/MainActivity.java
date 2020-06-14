@@ -2,6 +2,7 @@ package com.example.notes;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.solver.widgets.Snapshot;
 
 import android.os.Bundle;
 import android.util.Log;
@@ -9,31 +10,49 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import com.google.android.gms.common.api.Batch;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.WriteBatch;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
-    Button mButton;
+    Button mButton_Add;
+    Button mButton_Delete;
+    FirebaseFirestore firebaseFirestore;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        firebaseFirestore=FirebaseFirestore.getInstance();
+
+
         FirebaseFirestore.setLoggingEnabled(true);
 
-        mButton=findViewById(R.id.button);
-        mButton.setOnClickListener(new View.OnClickListener() {
+        mButton_Add=findViewById(R.id.button_add);
+        mButton_Add.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 add_note(v);
+            }
+        });
+
+        mButton_Delete=findViewById(R.id.button_delete);
+        mButton_Delete.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                delete_note(v);
             }
         });
         
@@ -52,7 +71,6 @@ public class MainActivity extends AppCompatActivity {
         note.put("name","Iphone 11");
         note.put("price","$299");
         
-        FirebaseFirestore firebaseFirestore=FirebaseFirestore.getInstance();
         firebaseFirestore.collection("Notes").add(note)
                 .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
                     @Override
@@ -68,5 +86,43 @@ public class MainActivity extends AppCompatActivity {
                 });
     }
 
+    private void delete_note(View v) {
+
+        firebaseFirestore.collection("Notes")
+                .whereEqualTo("brand","Apple")
+                .get()
+                .addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+                    @Override
+                    public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
+
+                        WriteBatch batch=FirebaseFirestore.getInstance().batch();
+
+                        List<DocumentSnapshot> snapshots=queryDocumentSnapshots.getDocuments();
+                        for(DocumentSnapshot snapshot : snapshots){
+                            batch.delete(snapshot.getReference());
+                        }
+
+                        batch.commit().addOnSuccessListener(new OnSuccessListener<Void>() {
+                            @Override
+                            public void onSuccess(Void aVoid) {
+                                Log.d(TAG, "onSuccess: doc deleted with brand Apple ");
+                            }
+                        }).addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                                Log.d(TAG, "onFailure: doc not deleted yet");
+                            }
+                        });
+
+                    }
+
+                }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+
+            }
+        });
+
+    }
 
 }
