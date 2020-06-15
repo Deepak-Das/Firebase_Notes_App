@@ -12,10 +12,12 @@ import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import com.firebase.ui.auth.AuthUI;
 import com.google.android.gms.common.api.Batch;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -26,13 +28,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements FirebaseAuth.AuthStateListener {
 
     private static final String TAG = "MainActivity";
     Button mButton_Add;
     Button mButton_Delete;
+    Button mButton_LogOut;
     ProgressBar progressBar;
     FirebaseFirestore firebaseFirestore;
+    FirebaseUser user;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,6 +47,8 @@ public class MainActivity extends AppCompatActivity {
 
 
         FirebaseFirestore.setLoggingEnabled(true);
+        user=FirebaseAuth.getInstance().getCurrentUser();
+
 
         progressBar=findViewById(R.id.progressBar);
         progressBar.setVisibility(View.INVISIBLE);
@@ -62,9 +68,14 @@ public class MainActivity extends AppCompatActivity {
                 delete_note(v);
             }
         });
-        
 
-       
+        mButton_LogOut=findViewById(R.id.button_logOut);
+        mButton_LogOut.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                logOutHandler();
+            }
+        });
 
         
     }
@@ -76,12 +87,21 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    private void logOutHandler() {
+        AuthUI.getInstance().signOut(this);
+    }
+
     @Override
     protected void onStart() {
         super.onStart();
-        if(FirebaseAuth.getInstance().getCurrentUser()==null){
-            startLoginActivity();
-        }
+        FirebaseAuth.getInstance().addAuthStateListener(this);
+
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        FirebaseAuth.getInstance().removeAuthStateListener(this);
     }
 
     private void add_note(View v) {
@@ -95,7 +115,8 @@ public class MainActivity extends AppCompatActivity {
 
         progressBar.setVisibility(View.VISIBLE);
 
-        Note note=new Note("Firebase","learn","123",false);
+
+        Note note=new Note("Firebase","learn",user.getUid(),false);
         
         firebaseFirestore.collection("Notes").add(note)
                 .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
@@ -119,7 +140,7 @@ public class MainActivity extends AppCompatActivity {
         progressBar.setVisibility(View.VISIBLE);
 
         firebaseFirestore.collection("Notes")
-                .whereEqualTo("user_id","123")
+                .whereEqualTo("user_id",user.getUid())
                 .get()
                 .addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
                     @Override
@@ -160,4 +181,12 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    @Override
+    public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
+        if(FirebaseAuth.getInstance().getCurrentUser()==null){
+            startLoginActivity();
+            return;
+        }
+
+    }
 }

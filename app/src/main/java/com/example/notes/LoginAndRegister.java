@@ -28,10 +28,10 @@ public class LoginAndRegister extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login_and_register);
-
+//
 //        if(FirebaseAuth.getInstance().getCurrentUser()!=null){
 //            startActivity(new Intent(this,MainActivity.class));
-//            this.finish();
+//            finish();
 //        }
 
         buttonLogin=findViewById(R.id.button_login);
@@ -58,12 +58,20 @@ public class LoginAndRegister extends AppCompatActivity {
                 REQUEST_SIGN_IN);
     }
 
+    public void startMainActivity(){
+        if(FirebaseAuth.getInstance().getCurrentUser()!=null){
+            startActivity(new Intent(this,MainActivity.class));
+            finish();
+        }
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+
         if(requestCode==REQUEST_SIGN_IN){
-            IdpResponse response = IdpResponse.fromResultIntent(data);
             if(resultCode==RESULT_OK){
+                //SIGN IN SUCCESSFULLY.
                 FirebaseUser user=FirebaseAuth.getInstance().getCurrentUser();
                 Log.i(TAG, "onActivityResult: "+user.getEmail());
 
@@ -76,6 +84,18 @@ public class LoginAndRegister extends AppCompatActivity {
                     Toast.makeText(this, "Welcome back Again", Toast.LENGTH_SHORT).show();
                 }
 
+                startMainActivity();
+
+
+            }else{
+                //SIGN IN FAIL.
+                IdpResponse response=IdpResponse.fromResultIntent(data);
+                if(response==null){
+                    Log.i(TAG, "onActivityResult: User cancelled the sign request.");
+                    Toast.makeText(this, "email cancelled", Toast.LENGTH_SHORT).show();
+                }else {
+                    Log.i(TAG, "onActivityResult: ",response.getError());
+                }
             }
         }
     }
@@ -83,10 +103,6 @@ public class LoginAndRegister extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-
-        if(FirebaseAuth.getInstance().getCurrentUser()!=null){
-            startActivity(new Intent(this,MainActivity.class));
-            finish();
-        }
+        startMainActivity();
     }
 }
