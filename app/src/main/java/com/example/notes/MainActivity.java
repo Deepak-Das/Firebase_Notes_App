@@ -2,20 +2,22 @@ package com.example.notes;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.constraintlayout.solver.widgets.Snapshot;
 
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.firebase.ui.auth.AuthUI;
-import com.google.android.gms.common.api.Batch;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.button.MaterialButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
@@ -24,17 +26,15 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.WriteBatch;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class MainActivity extends AppCompatActivity implements FirebaseAuth.AuthStateListener {
 
     private static final String TAG = "MainActivity";
-    Button mButton_Add;
-    Button mButton_Delete;
-    Button mButton_LogOut;
+    MaterialButton mButton_Add;
+    MaterialButton mButton_Delete;
     ProgressBar progressBar;
+    MaterialToolbar mtoolbar;
     FirebaseFirestore firebaseFirestore;
     FirebaseUser user;
 
@@ -48,6 +48,9 @@ public class MainActivity extends AppCompatActivity implements FirebaseAuth.Auth
 
         FirebaseFirestore.setLoggingEnabled(true);
         user=FirebaseAuth.getInstance().getCurrentUser();
+
+        mtoolbar=findViewById(R.id.toolbar);
+        setSupportActionBar(mtoolbar);
 
 
         progressBar=findViewById(R.id.progressBar);
@@ -69,13 +72,7 @@ public class MainActivity extends AppCompatActivity implements FirebaseAuth.Auth
             }
         });
 
-        mButton_LogOut=findViewById(R.id.button_logOut);
-        mButton_LogOut.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                logOutHandler();
-            }
-        });
+
 
         
     }
@@ -102,6 +99,37 @@ public class MainActivity extends AppCompatActivity implements FirebaseAuth.Auth
     protected void onStop() {
         super.onStop();
         FirebaseAuth.getInstance().removeAuthStateListener(this);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater= getMenuInflater();
+        inflater.inflate(R.menu.menu_items,menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        switch (item.getItemId()){
+            case (R.id.profile):
+                Toast.makeText(this, "profile", Toast.LENGTH_SHORT).show();
+                return true;
+
+            case (R.id.setting):
+                Toast.makeText(this, "setting", Toast.LENGTH_SHORT).show();
+                return true;
+
+            case (R.id.logOut):{
+                logOutHandler();
+                Toast.makeText(this, "log out successfully", Toast.LENGTH_SHORT).show();
+                return true;
+                }
+
+
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+
     }
 
     private void add_note(View v) {

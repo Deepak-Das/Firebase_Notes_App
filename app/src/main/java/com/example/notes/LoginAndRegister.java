@@ -12,6 +12,7 @@ import android.widget.Toast;
 
 import com.firebase.ui.auth.AuthUI;
 import com.firebase.ui.auth.IdpResponse;
+import com.google.android.material.button.MaterialButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
@@ -20,7 +21,7 @@ import java.util.List;
 
 public class LoginAndRegister extends AppCompatActivity {
 
-    Button buttonLogin;
+    MaterialButton buttonLogin;
     private static final String TAG = "LoginAndRegister";
     private int REQUEST_SIGN_IN=10001;
 
@@ -28,11 +29,7 @@ public class LoginAndRegister extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login_and_register);
-//
-//        if(FirebaseAuth.getInstance().getCurrentUser()!=null){
-//            startActivity(new Intent(this,MainActivity.class));
-//            finish();
-//        }
+
 
         buttonLogin=findViewById(R.id.button_login);
 
@@ -73,7 +70,7 @@ public class LoginAndRegister extends AppCompatActivity {
             if(resultCode==RESULT_OK){
                 //SIGN IN SUCCESSFULLY.
                 FirebaseUser user=FirebaseAuth.getInstance().getCurrentUser();
-                Log.i(TAG, "onActivityResult: "+user.getEmail());
+                Log.d(TAG, "onActivityResult: "+user.getEmail());
 
                 if(user.getMetadata().getCreationTimestamp()==user.getMetadata().getLastSignInTimestamp()){
 
