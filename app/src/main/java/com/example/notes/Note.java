@@ -1,19 +1,23 @@
 package com.example.notes;
 
+import com.google.firebase.Timestamp;
+
 public class Note {
 
     String title,description,user_id;
     Boolean complete;
+    Timestamp create;
 
     public Note(){
         //firebase required this constructor
     }
 
-    public Note(String title, String description, String user_id, Boolean complete) {
+    public Note(String title, String description, String user_id, Boolean complete, Timestamp create) {
         this.title = title;
         this.description = description;
         this.user_id = user_id;
         this.complete = complete;
+        this.create = create;
     }
 
     public String getTitle() {
@@ -46,6 +50,14 @@ public class Note {
 
     public void setComplete(Boolean complete) {
         this.complete = complete;
+    }
+
+    public Timestamp getCreate() {
+        return create;
+    }
+
+    public void setCreate(Timestamp create) {
+        this.create = create;
     }
 
     @Override

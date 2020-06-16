@@ -3,8 +3,10 @@ package com.example.notes;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -18,6 +20,12 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.dialog.MaterialDialogs;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
+import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
@@ -26,17 +34,27 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.WriteBatch;
 
+import java.util.Date;
 import java.util.List;
+import java.util.zip.Inflater;
 
 public class MainActivity extends AppCompatActivity implements FirebaseAuth.AuthStateListener {
 
     private static final String TAG = "MainActivity";
-    MaterialButton mButton_Add;
-    MaterialButton mButton_Delete;
-    ProgressBar progressBar;
-    MaterialToolbar mtoolbar;
-    FirebaseFirestore firebaseFirestore;
-    FirebaseUser user;
+    
+    private FloatingActionButton mfab;
+    private MaterialButton mButton_Delete;
+   
+//    private TextInputLayout mTitle;
+//    private TextInputLayout mDescription;
+
+    private ProgressBar progressBar;
+    private MaterialToolbar mtoolbar;
+
+    private MaterialAlertDialogBuilder materialAlertDialogBuilder;
+    
+    private FirebaseFirestore firebaseFirestore;
+    private FirebaseUser user;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,11 +74,11 @@ public class MainActivity extends AppCompatActivity implements FirebaseAuth.Auth
         progressBar=findViewById(R.id.progressBar);
         progressBar.setVisibility(View.INVISIBLE);
 
-        mButton_Add=findViewById(R.id.button_add);
-        mButton_Add.setOnClickListener(new View.OnClickListener() {
+        mfab=findViewById(R.id.floating_action_button);
+        mfab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                add_note(v);
+                alert_dialoge_show();
             }
         });
 
@@ -73,8 +91,25 @@ public class MainActivity extends AppCompatActivity implements FirebaseAuth.Auth
         });
 
 
-
         
+        
+    }
+
+    private void alert_dialoge_show() {
+
+        //It's important to get Layout Inflater if u r finding the layout out of different activity or xml file
+        // which is not associated with your current activity
+        final View mView =getLayoutInflater().inflate(R.layout.alert_dialoge,null);
+        materialAlertDialogBuilder=new MaterialAlertDialogBuilder(this);
+        materialAlertDialogBuilder.setTitle("Add new notes");
+        materialAlertDialogBuilder.setView(mView);
+        materialAlertDialogBuilder.setPositiveButton("Add", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                add_note(mView);
+            }
+        });
+        materialAlertDialogBuilder.show();
     }
 
     public void startLoginActivity(){
@@ -132,35 +167,45 @@ public class MainActivity extends AppCompatActivity implements FirebaseAuth.Auth
 
     }
 
-    private void add_note(View v) {
+    private void add_note(View view) {
 
-//        Toast.makeText(this, "clicked", Toast.LENGTH_SHORT).show();
+        //same view must be pass so that it can read input that form alert dialog which is created by Material Ui.
+        //if directly fvbId() it will find the view in the same activity or if u create new View it will find value to the instance that
+        //u have create, so its important to pass the same view which Material Alert builder is using.
 
-//        Map<String,Object> note= new HashMap<>();
-//        note.put("brand","Apple");
-//        note.put("name","Iphone 11");
-//        note.put("price","$299");
-
-        progressBar.setVisibility(View.VISIBLE);
-
-
-        Note note=new Note("Firebase","learn",user.getUid(),false);
+        final TextInputEditText mTitle=view.findViewById(R.id.edite_text_title);
+        final TextInputEditText mDescription=view.findViewById(R.id.edite_text_description);
         
-        firebaseFirestore.collection("Notes").add(note)
-                .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
-                    @Override
-                    public void onSuccess(DocumentReference documentReference) {
-                        Log.d(TAG, "onSuccess: "+documentReference.getId());
-                        progressBar.setVisibility(View.GONE);
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Log.d(TAG, "onFailure: "+e.getMessage());
-                        progressBar.setVisibility(View.GONE);
-                    }
-                });
+        String title=mTitle.getText().toString();
+        String description=mDescription.getText().toString();
+        Log.d(TAG, "add_note: "+title);
+        Log.d(TAG, "add_note: "+description);
+            if(!TextUtils.isEmpty(title)&&!TextUtils.isEmpty(description)){
+                progressBar.setVisibility(View.VISIBLE);
+    
+    
+                Note note=new Note(title,description,user.getUid(),false, new Timestamp(new Date()));
+    
+                firebaseFirestore.collection("Notes").add(note)
+                        .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
+                            @Override
+                            public void onSuccess(DocumentReference documentReference) {
+                                Log.d(TAG, "onSuccess: "+documentReference.getId());
+                                progressBar.setVisibility(View.GONE);
+                            }
+                        })
+                        .addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                                Log.d(TAG, "onFailure: "+e.getMessage());
+                                progressBar.setVisibility(View.GONE);
+                            }
+                        });
+            }else{
+                Toast.makeText(this, "invalid! give input in both field", Toast.LENGTH_SHORT).show();
+            }
+
+
     }
 
     private void delete_note(View v) {
