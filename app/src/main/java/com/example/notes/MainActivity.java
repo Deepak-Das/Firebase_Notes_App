@@ -1,8 +1,5 @@
 package com.example.notes;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
@@ -15,17 +12,17 @@ import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+
 import com.firebase.ui.auth.AuthUI;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import com.google.android.material.dialog.MaterialDialogs;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
-import com.google.android.material.textfield.TextInputLayout;
-import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
@@ -34,9 +31,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.WriteBatch;
 
-import java.util.Date;
 import java.util.List;
-import java.util.zip.Inflater;
 
 public class MainActivity extends AppCompatActivity implements FirebaseAuth.AuthStateListener {
 
@@ -53,7 +48,7 @@ public class MainActivity extends AppCompatActivity implements FirebaseAuth.Auth
 
     private MaterialAlertDialogBuilder materialAlertDialogBuilder;
     
-    private FirebaseFirestore firebaseFirestore;
+    FirebaseFirestore firebaseFirestore;
     private FirebaseUser user;
 
     @Override
@@ -62,7 +57,6 @@ public class MainActivity extends AppCompatActivity implements FirebaseAuth.Auth
         setContentView(R.layout.activity_main);
 
         firebaseFirestore=FirebaseFirestore.getInstance();
-
 
         FirebaseFirestore.setLoggingEnabled(true);
         user=FirebaseAuth.getInstance().getCurrentUser();
@@ -182,10 +176,12 @@ public class MainActivity extends AppCompatActivity implements FirebaseAuth.Auth
         Log.d(TAG, "add_note: "+description);
             if(!TextUtils.isEmpty(title)&&!TextUtils.isEmpty(description)){
                 progressBar.setVisibility(View.VISIBLE);
+
+
     
     
-                Note note=new Note(title,description,user.getUid(),false, new Timestamp(new Date()));
-    
+                Note note=new Note(title,description,user.getUid(),false, null);
+
                 firebaseFirestore.collection("Notes").add(note)
                         .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
                             @Override
