@@ -14,10 +14,15 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.DividerItemDecoration;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.firebase.ui.auth.AuthUI;
+import com.firebase.ui.firestore.FirestoreRecyclerOptions;
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -28,28 +33,33 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.WriteBatch;
 
+import java.util.Date;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements FirebaseAuth.AuthStateListener {
+public class MainActivity extends AppCompatActivity implements FirebaseAuth.AuthStateListener, NoteActionHandler  {
 
     private static final String TAG = "MainActivity";
     
-    private FloatingActionButton mfab;
-    private MaterialButton mButton_Delete;
+     FloatingActionButton mfab;
+     MaterialButton mButton_Delete;
+     RecyclerView recyclerView;
    
 //    private TextInputLayout mTitle;
 //    private TextInputLayout mDescription;
 
-    private ProgressBar progressBar;
-    private MaterialToolbar mtoolbar;
+     ProgressBar progressBar;
+     MaterialToolbar mtoolbar;
 
-    private MaterialAlertDialogBuilder materialAlertDialogBuilder;
+     MaterialAlertDialogBuilder materialAlertDialogBuilder;
     
-    FirebaseFirestore firebaseFirestore;
-    private FirebaseUser user;
+     FirebaseFirestore firebaseFirestore;
+     FirebaseUser user;
+
+     NoteFireStoreRecyclerAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,6 +70,8 @@ public class MainActivity extends AppCompatActivity implements FirebaseAuth.Auth
 
         FirebaseFirestore.setLoggingEnabled(true);
         user=FirebaseAuth.getInstance().getCurrentUser();
+
+        recyclerView=findViewById(R.id.recyclerView);
 
         mtoolbar=findViewById(R.id.toolbar);
         setSupportActionBar(mtoolbar);
@@ -76,13 +88,13 @@ public class MainActivity extends AppCompatActivity implements FirebaseAuth.Auth
             }
         });
 
-        mButton_Delete=findViewById(R.id.button_delete);
-        mButton_Delete.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                delete_note(v);
-            }
-        });
+//        mButton_Delete=findViewById(R.id.button_delete);
+//        mButton_Delete.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                delete_note(v);
+//            }
+//        });
 
 
         
@@ -128,6 +140,10 @@ public class MainActivity extends AppCompatActivity implements FirebaseAuth.Auth
     protected void onStop() {
         super.onStop();
         FirebaseAuth.getInstance().removeAuthStateListener(this);
+
+        if(adapter!=null){
+            adapter.stopListening();;
+        }
     }
 
     @Override
@@ -147,6 +163,12 @@ public class MainActivity extends AppCompatActivity implements FirebaseAuth.Auth
             case (R.id.setting):
                 Toast.makeText(this, "setting", Toast.LENGTH_SHORT).show();
                 return true;
+
+            case (R.id.delete):{
+                delete_note();
+                Toast.makeText(this, "all notes deleted successfully", Toast.LENGTH_SHORT).show();
+                return true;
+            }
 
             case (R.id.logOut):{
                 logOutHandler();
@@ -180,7 +202,7 @@ public class MainActivity extends AppCompatActivity implements FirebaseAuth.Auth
 
     
     
-                Note note=new Note(title,description,user.getUid(),false, null);
+                Note note=new Note(title,description,user.getUid(),false, new Date());
 
                 firebaseFirestore.collection("Notes").add(note)
                         .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
@@ -204,7 +226,7 @@ public class MainActivity extends AppCompatActivity implements FirebaseAuth.Auth
 
     }
 
-    private void delete_note(View v) {
+    private void delete_note() {
 
         progressBar.setVisibility(View.VISIBLE);
 
@@ -257,5 +279,41 @@ public class MainActivity extends AppCompatActivity implements FirebaseAuth.Auth
             return;
         }
 
+                initRecyclerViwe(firebaseAuth.getCurrentUser());
+
+    }
+
+    public void initRecyclerViwe(FirebaseUser user){
+
+        Query query=FirebaseFirestore.getInstance().collection("Notes")
+                .whereEqualTo("user_id",user.getUid());
+
+
+        FirestoreRecyclerOptions<Note> options=new FirestoreRecyclerOptions.Builder<Note>()
+                .setQuery(query,Note.class)
+                .build();
+
+        adapter=new NoteFireStoreRecyclerAdapter(options,this);
+        recyclerView.setAdapter(adapter);
+        DividerItemDecoration dividerItemDecoration=new DividerItemDecoration(this,DividerItemDecoration.VERTICAL);
+        recyclerView.addItemDecoration(dividerItemDecoration);
+        adapter.startListening();
+
+    }
+
+    @Override
+    public void onCheckboxClick(boolean isChecked, DocumentSnapshot snapshot) {
+        Log.d(TAG, "onCheckboxClick: "+isChecked);
+        snapshot.getReference().update("complete",isChecked)
+                .addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        if(task.isComplete()){
+                            Log.d(TAG, "onComplete: success ");
+                        }else{
+                            Log.d(TAG, "onComplete: fail");
+                        }
+                    }
+                });
     }
 }

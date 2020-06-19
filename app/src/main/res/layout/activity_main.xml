@@ -24,18 +24,20 @@
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="?attr/actionBarSize"/>
+        android:layout_marginTop="?attr/actionBarSize"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"/>
 
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/button_delete"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|center_horizontal"
-        android:layout_marginBottom="150dp"
-        android:text="DELETE" />
+<!--    <com.google.android.material.button.MaterialButton-->
+<!--        android:id="@+id/button_delete"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_gravity="bottom|center_horizontal"-->
+<!--        android:layout_marginBottom="150dp"-->
+<!--        android:text="DELETE" />-->
 
 
     <ProgressBar

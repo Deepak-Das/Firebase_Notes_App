@@ -1,35 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
-    xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent"
-    android:layout_height="match_parent">
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:layout_margin="16dp"
+    >
 
-    <com.google.android.material.textview.MaterialTextView
-        android:id="@+id/note_item_title"
-        android:layout_width="307dp"
+    <LinearLayout
+        android:layout_width="210dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="16dp"
-        android:text="Title" />
+        android:orientation="vertical">
 
-    <com.google.android.material.textview.MaterialTextView
-        android:id="@+id/note_item_description"
-        android:layout_width="307dp"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/note_item_title"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="10dp"
-        android:layout_marginBottom="16dp"
-        android:text="Description" />
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/note_item_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Title"
+            android:textSize="20dp"
+            android:layout_marginBottom="8dp"
+            />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/note_item_description"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Description"
+             />
+
+    </LinearLayout>
+
 
     <com.google.android.material.checkbox.MaterialCheckBox
         android:id="@+id/note_item_checkbox"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignTop="@+id/note_item_description"
-        android:layout_marginStart="7dp"
-        android:layout_marginTop="-29dp"
-        android:layout_toEndOf="@+id/note_item_description"
-        android:text="Done" />
+        android:layout_height="20dp"
+        android:text="Done"
+       android:layout_gravity="center" />
 
-</RelativeLayout>
+</LinearLayout>
