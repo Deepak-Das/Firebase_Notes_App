@@ -2,6 +2,7 @@ package com.example.notes;
 
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Canvas;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -14,7 +15,9 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.DividerItemDecoration;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.firebase.ui.auth.AuthUI;
@@ -27,7 +30,9 @@ import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
@@ -40,47 +45,49 @@ import com.google.firebase.firestore.WriteBatch;
 import java.util.Date;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements FirebaseAuth.AuthStateListener, NoteActionHandler  {
+import it.xabaras.android.recyclerview.swipedecorator.RecyclerViewSwipeDecorator;
+
+public class MainActivity extends AppCompatActivity implements FirebaseAuth.AuthStateListener, NoteActionHandler {
 
     private static final String TAG = "MainActivity";
-    
-     FloatingActionButton mfab;
-     MaterialButton mButton_Delete;
-     RecyclerView recyclerView;
-   
+
+    FloatingActionButton mfab;
+    MaterialButton mButton_Delete;
+    RecyclerView recyclerView;
+
 //    private TextInputLayout mTitle;
 //    private TextInputLayout mDescription;
 
-     ProgressBar progressBar;
-     MaterialToolbar mtoolbar;
+    ProgressBar progressBar;
+    MaterialToolbar mtoolbar;
 
-     MaterialAlertDialogBuilder materialAlertDialogBuilder;
-    
-     FirebaseFirestore firebaseFirestore;
-     FirebaseUser user;
+    MaterialAlertDialogBuilder materialAlertDialogBuilder;
 
-     NoteFireStoreRecyclerAdapter adapter;
+    FirebaseFirestore firebaseFirestore;
+    FirebaseUser user;
+
+    NoteFireStoreRecyclerAdapter adapter;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        firebaseFirestore=FirebaseFirestore.getInstance();
+        firebaseFirestore = FirebaseFirestore.getInstance();
 
-        FirebaseFirestore.setLoggingEnabled(true);
-        user=FirebaseAuth.getInstance().getCurrentUser();
+        user = FirebaseAuth.getInstance().getCurrentUser();
 
-        recyclerView=findViewById(R.id.recyclerView);
+        recyclerView = findViewById(R.id.recyclerView);
 
-        mtoolbar=findViewById(R.id.toolbar);
+        mtoolbar = findViewById(R.id.toolbar);
         setSupportActionBar(mtoolbar);
 
 
-        progressBar=findViewById(R.id.progressBar);
+        progressBar = findViewById(R.id.progressBar);
         progressBar.setVisibility(View.INVISIBLE);
 
-        mfab=findViewById(R.id.floating_action_button);
+        mfab = findViewById(R.id.floating_action_button);
         mfab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -97,16 +104,14 @@ public class MainActivity extends AppCompatActivity implements FirebaseAuth.Auth
 //        });
 
 
-        
-        
     }
 
     private void alert_dialoge_show() {
 
         //It's important to get Layout Inflater if u r finding the layout out of different activity or xml file
         // which is not associated with your current activity
-        final View mView =getLayoutInflater().inflate(R.layout.alert_dialoge,null);
-        materialAlertDialogBuilder=new MaterialAlertDialogBuilder(this);
+        final View mView = getLayoutInflater().inflate(R.layout.alert_dialoge, null);
+        materialAlertDialogBuilder = new MaterialAlertDialogBuilder(this);
         materialAlertDialogBuilder.setTitle("Add new notes");
         materialAlertDialogBuilder.setView(mView);
         materialAlertDialogBuilder.setPositiveButton("Add", new DialogInterface.OnClickListener() {
@@ -118,8 +123,8 @@ public class MainActivity extends AppCompatActivity implements FirebaseAuth.Auth
         materialAlertDialogBuilder.show();
     }
 
-    public void startLoginActivity(){
-        Intent intent=new Intent(this,LoginAndRegister.class);
+    public void startLoginActivity() {
+        Intent intent = new Intent(this, LoginAndRegister.class);
         startActivity(intent);
         finish();
 
@@ -141,21 +146,22 @@ public class MainActivity extends AppCompatActivity implements FirebaseAuth.Auth
         super.onStop();
         FirebaseAuth.getInstance().removeAuthStateListener(this);
 
-        if(adapter!=null){
-            adapter.stopListening();;
+        if (adapter != null) {
+            adapter.stopListening();
+            ;
         }
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater= getMenuInflater();
-        inflater.inflate(R.menu.menu_items,menu);
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu_items, menu);
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        switch (item.getItemId()){
+        switch (item.getItemId()) {
             case (R.id.profile):
                 Toast.makeText(this, "profile", Toast.LENGTH_SHORT).show();
                 return true;
@@ -164,17 +170,17 @@ public class MainActivity extends AppCompatActivity implements FirebaseAuth.Auth
                 Toast.makeText(this, "setting", Toast.LENGTH_SHORT).show();
                 return true;
 
-            case (R.id.delete):{
+            case (R.id.delete): {
                 delete_note();
                 Toast.makeText(this, "all notes deleted successfully", Toast.LENGTH_SHORT).show();
                 return true;
             }
 
-            case (R.id.logOut):{
+            case (R.id.logOut): {
                 logOutHandler();
                 Toast.makeText(this, "log out successfully", Toast.LENGTH_SHORT).show();
                 return true;
-                }
+            }
 
 
             default:
@@ -189,39 +195,37 @@ public class MainActivity extends AppCompatActivity implements FirebaseAuth.Auth
         //if directly fvbId() it will find the view in the same activity or if u create new View it will find value to the instance that
         //u have create, so its important to pass the same view which Material Alert builder is using.
 
-        final TextInputEditText mTitle=view.findViewById(R.id.edite_text_title);
-        final TextInputEditText mDescription=view.findViewById(R.id.edite_text_description);
-        
-        String title=mTitle.getText().toString();
-        String description=mDescription.getText().toString();
-        Log.d(TAG, "add_note: "+title);
-        Log.d(TAG, "add_note: "+description);
-            if(!TextUtils.isEmpty(title)&&!TextUtils.isEmpty(description)){
-                progressBar.setVisibility(View.VISIBLE);
+        final TextInputEditText mTitle = view.findViewById(R.id.edite_text_title);
+        final TextInputEditText mDescription = view.findViewById(R.id.edite_text_description);
+
+        String title = mTitle.getText().toString();
+        String description = mDescription.getText().toString();
+        Log.d(TAG, "add_note: " + title);
+        Log.d(TAG, "add_note: " + description);
+        if (!TextUtils.isEmpty(title) && !TextUtils.isEmpty(description)) {
+            progressBar.setVisibility(View.VISIBLE);
 
 
-    
-    
-                Note note=new Note(title,description,user.getUid(),false, new Date());
+            Note note = new Note(title, description, user.getUid(), false, new Timestamp(new Date()));
 
-                firebaseFirestore.collection("Notes").add(note)
-                        .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
-                            @Override
-                            public void onSuccess(DocumentReference documentReference) {
-                                Log.d(TAG, "onSuccess: "+documentReference.getId());
-                                progressBar.setVisibility(View.GONE);
-                            }
-                        })
-                        .addOnFailureListener(new OnFailureListener() {
-                            @Override
-                            public void onFailure(@NonNull Exception e) {
-                                Log.d(TAG, "onFailure: "+e.getMessage());
-                                progressBar.setVisibility(View.GONE);
-                            }
-                        });
-            }else{
-                Toast.makeText(this, "invalid! give input in both field", Toast.LENGTH_SHORT).show();
-            }
+            firebaseFirestore.collection("Notes").add(note)
+                    .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
+                        @Override
+                        public void onSuccess(DocumentReference documentReference) {
+                            Log.d(TAG, "onSuccess: " + documentReference.getId());
+                            progressBar.setVisibility(View.GONE);
+                        }
+                    })
+                    .addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception e) {
+                            Log.d(TAG, "onFailure: " + e.getMessage());
+                            progressBar.setVisibility(View.GONE);
+                        }
+                    });
+        } else {
+            Toast.makeText(this, "invalid! give input in both field", Toast.LENGTH_SHORT).show();
+        }
 
 
     }
@@ -231,16 +235,16 @@ public class MainActivity extends AppCompatActivity implements FirebaseAuth.Auth
         progressBar.setVisibility(View.VISIBLE);
 
         firebaseFirestore.collection("Notes")
-                .whereEqualTo("user_id",user.getUid())
+                .whereEqualTo("user_id", user.getUid())
                 .get()
                 .addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
                     @Override
                     public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
 
-                        WriteBatch batch=FirebaseFirestore.getInstance().batch();
+                        WriteBatch batch = FirebaseFirestore.getInstance().batch();
 
-                        List<DocumentSnapshot> snapshots=queryDocumentSnapshots.getDocuments();
-                        for(DocumentSnapshot snapshot : snapshots){
+                        List<DocumentSnapshot> snapshots = queryDocumentSnapshots.getDocuments();
+                        for (DocumentSnapshot snapshot : snapshots) {
                             batch.delete(snapshot.getReference());
                         }
 
@@ -274,46 +278,114 @@ public class MainActivity extends AppCompatActivity implements FirebaseAuth.Auth
 
     @Override
     public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
-        if(FirebaseAuth.getInstance().getCurrentUser()==null){
+        if (FirebaseAuth.getInstance().getCurrentUser() == null) {
             startLoginActivity();
             return;
         }
 
-                initRecyclerViwe(firebaseAuth.getCurrentUser());
+        initRecyclerView(firebaseAuth.getCurrentUser());
 
     }
 
-    public void initRecyclerViwe(FirebaseUser user){
+    public void initRecyclerView(FirebaseUser user) {
 
-        Query query=FirebaseFirestore.getInstance().collection("Notes")
-                .whereEqualTo("user_id",user.getUid());
+        Query query = FirebaseFirestore.getInstance().collection("Notes")
+                .whereEqualTo("user_id", user.getUid())
+                .orderBy("complete", Query.Direction.ASCENDING)
+                .orderBy("oncreate", Query.Direction.DESCENDING);
 
 
-        FirestoreRecyclerOptions<Note> options=new FirestoreRecyclerOptions.Builder<Note>()
-                .setQuery(query,Note.class)
+
+        FirestoreRecyclerOptions<Note> options = new FirestoreRecyclerOptions.Builder<Note>()
+                .setQuery(query, Note.class)
                 .build();
 
-        adapter=new NoteFireStoreRecyclerAdapter(options,this);
+        adapter = new NoteFireStoreRecyclerAdapter(options, this);
         recyclerView.setAdapter(adapter);
-        DividerItemDecoration dividerItemDecoration=new DividerItemDecoration(this,DividerItemDecoration.VERTICAL);
+        DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(this, DividerItemDecoration.VERTICAL);
         recyclerView.addItemDecoration(dividerItemDecoration);
         adapter.startListening();
 
+        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(simpleCallback);
+        itemTouchHelper.attachToRecyclerView(recyclerView);
+
     }
+
+    ItemTouchHelper.SimpleCallback simpleCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
+        @Override
+        public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
+            return false;
+        }
+
+        @Override
+        public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+            if (direction == ItemTouchHelper.LEFT || direction == ItemTouchHelper.RIGHT) {
+                //attaching viewHolder to the recyclerViewHolder where swip action is performing to ,snice to get the adpter positon
+                //and snapshot reffence to delete and undo feature in recycler view
+                NoteFireStoreRecyclerAdapter.NoteViewHolder noteViewHolder = (NoteFireStoreRecyclerAdapter.NoteViewHolder) viewHolder;
+                noteViewHolder.deleteItem();
+            }
+
+        }
+
+        @Override
+        public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, float dX, float dY, int actionState, boolean isCurrentlyActive) {
+
+            new RecyclerViewSwipeDecorator.Builder(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
+                    .addSwipeLeftBackgroundColor(ContextCompat.getColor(MainActivity.this, R.color.delete))
+                    .addSwipeLeftActionIcon(R.drawable.ic_delete_24)
+                    .addSwipeRightBackgroundColor(ContextCompat.getColor(MainActivity.this, R.color.delete))
+                    .addSwipeRightActionIcon(R.drawable.ic_delete_24)
+                    .create()
+                    .decorate();
+
+            super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
+        }
+    };
 
     @Override
     public void onCheckboxClick(boolean isChecked, DocumentSnapshot snapshot) {
-        Log.d(TAG, "onCheckboxClick: "+isChecked);
-        snapshot.getReference().update("complete",isChecked)
+        Log.d(TAG, "onCheckboxClick: " + isChecked);
+        snapshot.getReference().update("complete", isChecked)
                 .addOnCompleteListener(new OnCompleteListener<Void>() {
                     @Override
                     public void onComplete(@NonNull Task<Void> task) {
-                        if(task.isComplete()){
+                        if (task.isComplete()) {
                             Log.d(TAG, "onComplete: success ");
-                        }else{
+                        } else {
                             Log.d(TAG, "onComplete: fail");
                         }
                     }
                 });
+    }
+
+    @Override
+    public void onRecyclerItemClick() {
+        Toast.makeText(this, "cliked", Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onRecyclerItemDelete(DocumentSnapshot snapshot) {
+
+        final DocumentReference documentReference=snapshot.getReference();
+        final Note note=snapshot.toObject(Note.class);
+
+        documentReference.delete().addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                if(task.isSuccessful()){
+                    Log.d(TAG, "onComplete: deleted");
+                }else{
+                    Log.d(TAG, "onComplete: deletion fail "+task.getException());
+                }
+            }
+        });
+        Snackbar.make(recyclerView,"Note deleted",Snackbar.LENGTH_LONG)
+                .setAction("Undo", new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        documentReference.set(note);
+                    }
+                }).show();
     }
 }

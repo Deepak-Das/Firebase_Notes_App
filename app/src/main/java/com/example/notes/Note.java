@@ -1,24 +1,24 @@
 package com.example.notes;
 
-import java.util.Date;
+import com.google.firebase.Timestamp;
 
 public class Note {
 
     private String title,description,user_id;
     private Boolean complete;
-    private Date timestamp;
+    private Timestamp oncreate;
 
 
     public Note(){
         //firebase required this constructor
     }
 
-    public Note(String title, String description, String user_id, Boolean complete, Date timestamp) {
+    public Note(String title, String description, String user_id, Boolean complete, Timestamp oncreate) {
         this.title = title;
         this.description = description;
         this.user_id = user_id;
         this.complete = complete;
-        this.timestamp = timestamp;
+        this.oncreate = oncreate;
     }
 
     public String getTitle() {
@@ -53,12 +53,12 @@ public class Note {
         this.complete = complete;
     }
 
-    public Date getTimestamp() {
-        return timestamp;
+    public Timestamp getOncreate() {
+        return oncreate;
     }
 
-    public void setTimestamp(Date timestamp) {
-        this.timestamp = timestamp;
+    public void setOncreate(Timestamp oncreate) {
+        this.oncreate = oncreate;
     }
 
     @Override
@@ -68,7 +68,7 @@ public class Note {
                 ", description='" + description + '\'' +
                 ", user_id='" + user_id + '\'' +
                 ", complete=" + complete +
-                ", timestamp=" + timestamp +
+                ", oncreate=" + oncreate +
                 '}';
     }
 }
