@@ -78,10 +78,22 @@ public class NoteFireStoreRecyclerAdapter extends FirestoreRecyclerAdapter<Note,
                     }
                 }
             });
-            itemView.setOnClickListener(new View.OnClickListener() {
+//            itemView.setOnClickListener(new View.OnClickListener() {
+//                @Override
+//                public void onClick(View view) {
+//                    DocumentSnapshot snapshot = getSnapshots().getSnapshot(getAdapterPosition());
+//
+//                    noteActionHandler.onRecyclerItemLongClick(snapshot);
+//                }
+//            });
+            itemView.setOnLongClickListener(new View.OnLongClickListener() {
                 @Override
-                public void onClick(View view) {
-                    noteActionHandler.onRecyclerItemClick();
+                public boolean onLongClick(View view) {
+
+                    DocumentSnapshot snapshot = getSnapshots().getSnapshot(getAdapterPosition());
+
+                    noteActionHandler.onRecyclerItemLongClick(snapshot);
+                    return false;
                 }
             });
 

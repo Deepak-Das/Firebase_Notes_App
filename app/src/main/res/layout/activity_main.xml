@@ -19,7 +19,7 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             app:menu="@menu/menu_items"
-            app:navigationIcon="@drawable/ic_baseline_menu_24"
+            app:navigationIcon="@drawable/ic_note_menu_24"
             app:title="Notes" />
     </com.google.android.material.appbar.AppBarLayout>
 
@@ -54,6 +54,6 @@
         android:layout_gravity="bottom|right"
         android:layout_marginRight="30dp"
         android:layout_marginBottom="30dp"
-        android:src="@drawable/ic_baseline_fab_24" />
+        android:src="@drawable/ic_note_add_24"/>
 
 </FrameLayout>

@@ -40,10 +40,13 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.SetOptions;
 import com.google.firebase.firestore.WriteBatch;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import it.xabaras.android.recyclerview.swipedecorator.RecyclerViewSwipeDecorator;
 
@@ -61,7 +64,7 @@ public class MainActivity extends AppCompatActivity implements FirebaseAuth.Auth
     ProgressBar progressBar;
     MaterialToolbar mtoolbar;
 
-    MaterialAlertDialogBuilder materialAlertDialogBuilder;
+
 
     FirebaseFirestore firebaseFirestore;
     FirebaseUser user;
@@ -111,7 +114,7 @@ public class MainActivity extends AppCompatActivity implements FirebaseAuth.Auth
         //It's important to get Layout Inflater if u r finding the layout out of different activity or xml file
         // which is not associated with your current activity
         final View mView = getLayoutInflater().inflate(R.layout.alert_dialoge, null);
-        materialAlertDialogBuilder = new MaterialAlertDialogBuilder(this);
+        MaterialAlertDialogBuilder materialAlertDialogBuilder = new MaterialAlertDialogBuilder(this);
         materialAlertDialogBuilder.setTitle("Add new notes");
         materialAlertDialogBuilder.setView(mView);
         materialAlertDialogBuilder.setPositiveButton("Add", new DialogInterface.OnClickListener() {
@@ -130,9 +133,9 @@ public class MainActivity extends AppCompatActivity implements FirebaseAuth.Auth
 
     }
 
-    private void logOutHandler() {
-        AuthUI.getInstance().signOut(this);
-    }
+//    private void logOutHandler() {
+//        AuthUI.getInstance().signOut(this);
+//    }
 
     @Override
     protected void onStart() {
@@ -148,7 +151,6 @@ public class MainActivity extends AppCompatActivity implements FirebaseAuth.Auth
 
         if (adapter != null) {
             adapter.stopListening();
-            ;
         }
     }
 
@@ -177,7 +179,7 @@ public class MainActivity extends AppCompatActivity implements FirebaseAuth.Auth
             }
 
             case (R.id.logOut): {
-                logOutHandler();
+                AuthUI.getInstance().signOut(this);
                 Toast.makeText(this, "log out successfully", Toast.LENGTH_SHORT).show();
                 return true;
             }
@@ -195,14 +197,17 @@ public class MainActivity extends AppCompatActivity implements FirebaseAuth.Auth
         //if directly fvbId() it will find the view in the same activity or if u create new View it will find value to the instance that
         //u have create, so its important to pass the same view which Material Alert builder is using.
 
-        final TextInputEditText mTitle = view.findViewById(R.id.edite_text_title);
-        final TextInputEditText mDescription = view.findViewById(R.id.edite_text_description);
+        final TextInputEditText alert_title = view.findViewById(R.id.edite_text_title);
+        final TextInputEditText alert_description = view.findViewById(R.id.edite_text_description);
 
-        String title = mTitle.getText().toString();
-        String description = mDescription.getText().toString();
+        String title = alert_title.getText().toString();
+        String description = alert_description.getText().toString();
         Log.d(TAG, "add_note: " + title);
         Log.d(TAG, "add_note: " + description);
-        if (!TextUtils.isEmpty(title) && !TextUtils.isEmpty(description)) {
+        if (!TextUtils.isEmpty(title)) {
+            if(TextUtils.isEmpty(description)){
+                description="no description!!!";
+            }
             progressBar.setVisibility(View.VISIBLE);
 
 
@@ -224,7 +229,7 @@ public class MainActivity extends AppCompatActivity implements FirebaseAuth.Auth
                         }
                     });
         } else {
-            Toast.makeText(this, "invalid! give input in both field", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "invalid! Title is empty", Toast.LENGTH_SHORT).show();
         }
 
 
@@ -360,8 +365,54 @@ public class MainActivity extends AppCompatActivity implements FirebaseAuth.Auth
     }
 
     @Override
-    public void onRecyclerItemClick() {
+    public void onRecyclerItemLongClick(DocumentSnapshot snapshot) {
+        final Note note=snapshot.toObject(Note.class);
+        final DocumentReference documentReference=snapshot.getReference();
         Toast.makeText(this, "cliked", Toast.LENGTH_SHORT).show();
+
+        final View view =getLayoutInflater().inflate(R.layout.alert_dialoge,null);
+        final TextInputEditText alert_title=view.findViewById(R.id.edite_text_title);
+        final TextInputEditText alert_description=view.findViewById(R.id.edite_text_description);
+
+        alert_title.setText(note.getTitle());
+        alert_description.setText(note.getDescription());
+
+
+        MaterialAlertDialogBuilder materialAlertDialogBuilder=new MaterialAlertDialogBuilder(this);
+        materialAlertDialogBuilder.setTitle("Edit Note");
+        materialAlertDialogBuilder.setView(view);
+        materialAlertDialogBuilder.setPositiveButton("Save", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                String title=alert_title.getText().toString();
+                String description=alert_description.getText().toString();
+                Toast.makeText(MainActivity.this, description, Toast.LENGTH_SHORT).show();
+                edit_note(title,description,documentReference);
+            }
+        });
+        materialAlertDialogBuilder.setNegativeButton("cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                Toast.makeText(MainActivity.this, "edit cancel", Toast.LENGTH_SHORT).show();
+            }
+        });
+        materialAlertDialogBuilder.show();
+    }
+
+    private void edit_note(String title, String description,DocumentReference documentReference) {
+        Map<String,Object> edit=new HashMap<>();
+        edit.put("title",title);
+        edit.put("description",description);
+        documentReference.set(edit, SetOptions.merge()).addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                if(task.isSuccessful()){
+                    Toast.makeText(MainActivity.this, "edit successfully", Toast.LENGTH_SHORT).show();
+                }else{
+                    Log.d(TAG, "onComplete: "+task.getException());
+                }
+            }
+        });
     }
 
     @Override
